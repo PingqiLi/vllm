@@ -478,9 +478,12 @@ class ColumnParallelLinear(LinearBase):
         prefix: str = "",
         *,
         return_bias: bool = True,
+        disable_tp: bool = False,
     ):
         # Divide the weight matrix along the last dimension.
-        self.tp_size = get_tensor_model_parallel_world_size()
+        self.tp_rank = get_tensor_model_parallel_rank() if not disable_tp else 0
+        self.tp_size = (get_tensor_model_parallel_world_size()
+                        if not disable_tp else 1)
         self.input_size_per_partition = input_size
         self.output_size_per_partition = divide(output_size, self.tp_size)
         self.output_partition_sizes = [self.output_size_per_partition]
@@ -499,6 +502,7 @@ class ColumnParallelLinear(LinearBase):
                          prefix,
                          return_bias=return_bias)
 
+        self.disable_tp = disable_tp
         self.gather_output = gather_output
 
         if output_sizes is None:
@@ -639,10 +643,12 @@ class MergedColumnParallelLinear(ColumnParallelLinear):
         prefix: str = "",
         *,
         return_bias: bool = True,
+        disable_tp: bool = False,
     ):
         self.output_sizes = output_sizes
-        self.tp_size = get_tensor_model_parallel_world_size()
-        self.tp_rank = get_tensor_model_parallel_rank()
+        self.tp_rank = get_tensor_model_parallel_rank() if not disable_tp else 0
+        self.tp_size = (get_tensor_model_parallel_world_size()
+                        if not disable_tp else 1)
 
         assert all(output_size % self.tp_size == 0
                    for output_size in output_sizes)
@@ -654,7 +660,8 @@ class MergedColumnParallelLinear(ColumnParallelLinear):
                          params_dtype=params_dtype,
                          quant_config=quant_config,
                          prefix=prefix,
-                         return_bias=return_bias)
+                         return_bias=return_bias,
+                         disable_tp=disable_tp)
 
     def weight_loader(self,
                       param: Parameter,
@@ -1255,10 +1262,12 @@ class RowParallelLinear(LinearBase):
         prefix: str = "",
         *,
         return_bias: bool = True,
+        disable_tp: bool = False,
     ):
         # Divide the weight matrix along the first dimension.
-        self.tp_rank = get_tensor_model_parallel_rank()
-        self.tp_size = get_tensor_model_parallel_world_size()
+        self.tp_rank = get_tensor_model_parallel_rank() if not disable_tp else 0
+        self.tp_size = (get_tensor_model_parallel_world_size()
+                        if not disable_tp else 1)
         self.input_size_per_partition = divide(input_size, self.tp_size)
         self.output_size_per_partition = output_size
         self.output_partition_sizes = [output_size]

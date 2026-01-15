@@ -7,6 +7,7 @@ from typing import Any, Optional
 from vllm.model_executor.layers.fused_moe.config import FusedMoEConfig
 from vllm.model_executor.layers.fused_moe.layer import (
     FusedMoE, FusedMoEMethodBase, FusedMoeWeightScaleSupported)
+from vllm.model_executor.layers.fused_moe.shared_fused_moe import SharedFusedMoE
 from vllm.model_executor.layers.fused_moe.modular_kernel import (
     FusedMoEActivationFormat, FusedMoEPermuteExpertsUnpermute,
     FusedMoEPrepareAndFinalize)
@@ -30,6 +31,7 @@ def get_config() -> Optional[dict[str, Any]]:
 
 __all__ = [
     "FusedMoE",
+    "SharedFusedMoE",
     "FusedMoEConfig",
     "FusedMoEMethodBase",
     "FusedMoeWeightScaleSupported",
